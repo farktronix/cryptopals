@@ -8,6 +8,10 @@
 
 import Foundation
 
+enum CryptoPalsError : Error {
+    case invalidArugments
+}
+
 func hexStringToBytes(hexString : String) -> [UInt8] {
     var retval : [UInt8] = []
     var isMSB = true
@@ -153,7 +157,40 @@ func base64Decode(b64String : String) -> [UInt8] {
     return retval
 }
 
-func xorBytes(bytes1 : [UInt8], bytes2 : [UInt8]) -> [UInt8] {
+func xorBytes(bytes1 : [UInt8]? = nil, bytes2 : [UInt8]? = nil, hexString1 : String? = nil, hexString2 : String? = nil) throws -> [UInt8] {
+    var retval : [UInt8] = []
+    let source1 : [UInt8]
+    let source2 : [UInt8]
     
-}
+    if (bytes1 == nil) {
+        if (hexString1 == nil) {
+            throw CryptoPalsError.invalidArugments
+        } else {
+            source1 = hexStringToBytes(hexString: hexString1!)
+        }
+    } else {
+        source1 = bytes1!
+    }
+    
+    if (bytes2 == nil) {
+        if (hexString2 == nil) {
+            throw CryptoPalsError.invalidArugments
+        } else {
+            source2 = hexStringToBytes(hexString: hexString2!)
+        }
+    } else {
+        source2 = bytes2!
+    }
+    
+    if (source1.count != source2.count) {
+        throw CryptoPalsError.invalidArugments
+    }
+    
+    var idx = 0
+    while (idx < source1.count) {
+        retval.append(source1[idx] ^ source2[idx])
+        idx += 1
+    }
+    
+    return retval
 }

@@ -47,9 +47,9 @@ class CryptoPalsTests: XCTestCase {
     }
     
     func testB64RoundTrip() {
-        for i in 1...100 {
+        for _ in 1...100 {
             var randBytes : [UInt8] = []
-            for j in 0...arc4random_uniform(256) {
+            for _ in 0...arc4random_uniform(256) {
                 randBytes.append(UInt8(arc4random_uniform(256)))
             }
             let b64String = base64Encode(bytes: randBytes)
@@ -72,6 +72,18 @@ class CryptoPalsTests: XCTestCase {
         let expectedBytes = hexStringToBytes(hexString: cryptopalsString)
         let bytes4 = base64Decode(b64String: "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t")
         XCTAssertEqual(bytes4, expectedBytes)
+    }
+    
+    func testXOR() {
+        let hexString1 = "1c0111001f010100061a024b53535009181c"
+        let hexString2 = "686974207468652062756c6c277320657965"
+        var resultBytes : [UInt8]
+        do {
+            try resultBytes = xorBytes(hexString1: hexString1, hexString2: hexString2)
+            XCTAssertEqual(bytesToHexString(bytes: resultBytes), "746865206b696420646f6e277420706c6179")
+        } catch {
+            XCTFail()
+        }
     }
     
 }
