@@ -194,3 +194,67 @@ func xorBytes(bytes1 : [UInt8]? = nil, bytes2 : [UInt8]? = nil, hexString1 : Str
     
     return retval
 }
+
+func englishPlaintextScore(plaintext : String) -> Double {
+    struct letterFrequency {
+        // https://en.wikipedia.org/wiki/Letter_frequency
+        static let map = [
+            "a" :    0.08167,
+            "b" :    0.01492,
+            "c" :    0.02782,
+            "d" :    0.04253,
+            "e" :    0.12702,
+            "f" :    0.02228,
+            "g" :    0.02015,
+            "h" :    0.06094,
+            "i" :    0.06966,
+            "j" :    0.00153,
+            "k" :    0.00772,
+            "l" :    0.04025,
+            "m" :    0.02406,
+            "n" :    0.06749,
+            "o" :    0.07507,
+            "p" :    0.01929,
+            "q" :    0.00095,
+            "r" :    0.05987,
+            "s" :    0.06327,
+            "t" :    0.09056,
+            "u" :    0.02758,
+            "v" :    0.00978,
+            "w" :    0.02360,
+            "x" :    0.00150,
+            "y" :    0.01974,
+            "z" :    0.0007,
+        ]
+        
+        static let ignored = [".", ",", "-", "\"", " "]
+    }
+    var score : Double = 0
+    var letterFreq : [String : Double] = [:]
+    for curLetter in plaintext.lowercased() {
+        if let curCount = letterFreq[String(curLetter)] {
+            letterFreq[String(curLetter)] = curCount + 1
+        } else {
+            letterFreq[String(curLetter)] = 1
+        }
+    }
+
+    for (letter, freq) in letterFrequency.map {
+        var diff = freq
+        if let curCount = letterFreq[letter] {
+            let curFreq = curCount / Double(plaintext.count)
+            diff = fabs(curFreq - freq)
+        }
+        score += (1 / diff)
+    }
+
+    // Subtract points for every non-english character
+    for (letter, _) in letterFreq {
+        if letterFrequency.map[letter] == nil &&
+            !letterFrequency.ignored.contains(letter) {
+            score -= 100
+        }
+    }
+    
+    return score
+}
