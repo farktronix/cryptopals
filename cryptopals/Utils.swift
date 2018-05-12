@@ -283,40 +283,55 @@ func xorBytesWithKey(bytes: [UInt8], key : UInt8) -> [UInt8] {
     })
 }
 
-func findXORKey(cyphertext : [UInt8]) -> (key: UInt8, score : Double, plaintext : [UInt8]?) {
+func findXORKey(cyphertext : [UInt8], completion : @escaping (_ key: UInt8, _ score : Double, _ plaintext : [UInt8]?) -> ()) {
     var bestScore = Double.infinity
     var bestKey : UInt8 = 0
     var bestText : [UInt8]?
+    let decryptGroup = DispatchGroup()
+    let resultQueue = DispatchQueue(label: "com.farktronix.cryptopals.XORResultQueue")
     for i : UInt8 in 0...255 {
-        let plaintextBytes : [UInt8] = xorBytesWithKey(bytes: cyphertext, key: i)
-        let score = englishPlaintextScore(plaintext: plaintextBytes)
+        decryptGroup.enter()
+        DispatchQueue.global(qos: .userInitiated).async {
+            let plaintextBytes : [UInt8] = xorBytesWithKey(bytes: cyphertext, key: i)
+            let score = englishPlaintextScore(plaintext: plaintextBytes)
         
         // Debug
-//        var mPlaintextBytes = plaintextBytes
-//        mPlaintextBytes.append(0)
-//        mPlaintextBytes.withUnsafeBufferPointer { ptr in
-//            let text = String(cString: ptr.baseAddress!)
-//            print("xor \(i), score \(score): \(text)")
-//        }
+//          var mPlaintextBytes = plaintextBytes
+//          mPlaintextBytes.append(0)
+//          mPlaintextBytes.withUnsafeBufferPointer { ptr in
+//              let text = String(cString: ptr.baseAddress!)
+//              print("xor \(i), score \(score): \(text)")
+//          }
         
-        if score < bestScore {
-            bestScore = score
-            bestKey = i
-            bestText = plaintextBytes
+            if score < bestScore {
+                resultQueue.async {
+                    if score < bestScore {
+                        bestScore = score
+                        bestKey = i
+                        bestText = plaintextBytes
+                    }
+                    decryptGroup.leave()
+                }
+            } else {
+                decryptGroup.leave()
+            }
         }
     }
-    return (bestKey, bestScore, bestText)
+    decryptGroup.notify(queue: DispatchQueue.global(qos: .userInitiated)) {
+        completion(bestKey, bestScore, bestText)
+    }
 }
 
-func findXORKey(cyphertext : String) -> (key: UInt8, score : Double, plaintext : String?) {
+func findXORKey(cyphertext : String, completion : @escaping (_ key: UInt8, _ score : Double, _ plaintext : String?) -> ()) {
     let cypherbytes = hexStringToBytes(hexString: cyphertext)
-    let (bestKey, bestScore, bestTextBytes) = findXORKey(cyphertext: cypherbytes)
-    var bestText : String?
-    if var bestTextBytes = bestTextBytes {
-        bestTextBytes.append(0)
-        bestTextBytes.withUnsafeBufferPointer { ptr in
-            bestText = String(cString: ptr.baseAddress!)
+    findXORKey(cyphertext: cypherbytes) { (bestKey, bestScore, bestTextBytes) in
+        var bestText : String?
+        if var bestTextBytes = bestTextBytes {
+            bestTextBytes.append(0)
+            bestTextBytes.withUnsafeBufferPointer { ptr in
+                bestText = String(cString: ptr.baseAddress!)
+            }
         }
+        completion(bestKey, bestScore, bestText)
     }
-    return (bestKey, bestScore, bestText)
 }

@@ -93,10 +93,15 @@ class CryptoPalsTests: XCTestCase {
     }
     
     func testChallenge3() {
+        let expect = expectation(description: "Finding XOR String")
         let cyphertext = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
-        let (bestKey, bestScore, _) = findXORKey(cyphertext: cyphertext)
-        XCTAssertEqual(bestKey, 88)
-        print("Best score: \(bestScore)")
+        findXORKey(cyphertext: cyphertext) { (bestKey, _, _) in
+            XCTAssertEqual(bestKey, 88)
+            expect.fulfill()
+        }
+        waitForExpectations(timeout: 10) { (error) in
+            XCTFail()
+        }
     }
     
     func runChallenge4() {
@@ -105,26 +110,42 @@ class CryptoPalsTests: XCTestCase {
             do {
                 let allCyphertext = try String(contentsOfFile: cyphertextPath)
                 var bestScore = Double.infinity
-                var bestBytes : [UInt8]?
+//                var bestBytes : [UInt8]?
                 var bestKey : UInt8 = 0
+                let decryptGroup = DispatchGroup()
+                let resultQueue = DispatchQueue(label: "com.farktronix.cryptopals.Challenge4ResultQueue")
                 for cyphertext in allCyphertext.components(separatedBy: "\n") {
-                    let cypherbytes = hexStringToBytes(hexString: cyphertext)
-                    let (curKey, curScore, curBytes) = findXORKey(cyphertext: cypherbytes)
-                    if (curScore < bestScore) {
-                        bestScore = curScore
-                        bestBytes = curBytes
-                        bestKey = curKey
+                    decryptGroup.enter()
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        let cypherbytes = hexStringToBytes(hexString: cyphertext)
+                        findXORKey(cyphertext: cypherbytes, completion: { (curKey, curScore, _) in
+                            if (curScore < bestScore) {
+                                resultQueue.async {
+                                    if (curScore < bestScore) {
+                                        bestScore = curScore
+//                                      bestBytes = curBytes
+                                        bestKey = curKey
+                                    }
+                                    decryptGroup.leave()
+                                }
+                            } else {
+                                decryptGroup.leave()
+                            }
+
+                        })
                     }
                 }
-                if var bestBytes = bestBytes {
-                    bestBytes.append(0)
-                    bestBytes.withUnsafeBufferPointer { ptr in
-                        let bestText = String(cString: ptr.baseAddress!)
-                        print("Answer: \(bestText) (Score: \(bestScore), key: \(bestKey))")
-                    }
-                } else {
-                    XCTFail("Didn't have a best result in bytes")
-                }
+                decryptGroup.wait()
+                XCTAssertEqual(bestKey, 53)
+//                if var bestBytes = bestBytes {
+//                    bestBytes.append(0)
+//                    bestBytes.withUnsafeBufferPointer { ptr in
+//                        let bestText = String(cString: ptr.baseAddress!)
+//                        print("Answer: \(bestText) (Score: \(bestScore), key: \(bestKey))")
+//                    }
+//                } else {
+//                    XCTFail("Didn't have a best result in bytes")
+//                }
             } catch {
                 XCTFail("Couldn't read from the cyphertext file at \(cyphertextPath)")
             }
