@@ -11,6 +11,7 @@
 		438DF99E2095AD9700FE92D9 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43B001582095932600912121 /* Utils.swift */; };
 		43B00152209592DA00912121 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43B00151209592DA00912121 /* main.swift */; };
 		43B001592095932600912121 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43B001582095932600912121 /* Utils.swift */; };
+		43DE0F2820A40C5800FE9B68 /* Challenge4.txt in Resources */ = {isa = PBXBuildFile; fileRef = 43DE0F2720A40C5800FE9B68 /* Challenge4.txt */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -32,6 +33,7 @@
 		43B0014E209592D900912121 /* cryptopals */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = cryptopals; sourceTree = BUILT_PRODUCTS_DIR; };
 		43B00151209592DA00912121 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		43B001582095932600912121 /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
+		43DE0F2720A40C5800FE9B68 /* Challenge4.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = Challenge4.txt; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,6 +58,7 @@
 			isa = PBXGroup;
 			children = (
 				438DF9982095ACFF00FE92D9 /* CryptoPalsTests.swift */,
+				43DE0F2720A40C5800FE9B68 /* Challenge4.txt */,
 				438DF99A2095ACFF00FE92D9 /* Info.plist */,
 			);
 			path = CryptoPalsTests;
@@ -137,9 +140,11 @@
 				TargetAttributes = {
 					438DF9952095ACFF00FE92D9 = {
 						CreatedOnToolsVersion = 9.3;
+						LastSwiftMigration = 0930;
 					};
 					43B0014D209592D900912121 = {
 						CreatedOnToolsVersion = 9.3;
+						LastSwiftMigration = 0930;
 					};
 				};
 			};
@@ -166,6 +171,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				43DE0F2820A40C5800FE9B68 /* Challenge4.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -196,6 +202,7 @@
 		438DF99C2095ACFF00FE92D9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = CryptoPalsTests/Info.plist;
@@ -206,6 +213,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.farktronix.CryptoPalsTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 4.0;
 			};
 			name = Debug;
@@ -213,6 +221,7 @@
 		438DF99D2095ACFF00FE92D9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = CryptoPalsTests/Info.plist;
@@ -343,8 +352,15 @@
 		43B00156209592DA00912121 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 4.0;
 			};
 			name = Debug;
@@ -352,7 +368,13 @@
 		43B00157209592DA00912121 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 4.0;
 			};

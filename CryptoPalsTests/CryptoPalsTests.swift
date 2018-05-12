@@ -89,39 +89,53 @@ class CryptoPalsTests: XCTestCase {
     func testEnglishPlaintextScore() {
         let score = englishPlaintextScore(plaintext: "Hello, world");
         let badScore = englishPlaintextScore(plaintext: "sadfasfadfbadfbhgsadfqw jkhasdf kljasd lkjqwjkfhqweugbqer ew e e e d e e fge");
-        XCTAssertGreaterThan(score, badScore)
+        XCTAssertLessThan(score, badScore)
     }
     
-    func xorBytesWithKey(bytes: [UInt8], key : UInt8) -> [UInt8] {
-        return bytes.map({ (curChar) -> UInt8 in
-            return curChar ^ key
-        })
-    }
-    
-    // TODO: This doesn't work right because it doesn't append a null byte to the data before making it into a string.
-    // I can't find an easy way to do that in Swift, and I already got the answer so ¯\_(ツ)_/¯
     func testChallenge3() {
         let cyphertext = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
-        let cypherbytes = hexStringToBytes(hexString: cyphertext)
-        var maxScore : Double = 0.0
-        var bestKey : UInt8 = 0
-        var bestText = ""
-        for i : UInt8 in 0...255 {
-            let plaintextBytes = xorBytesWithKey(bytes: cypherbytes, key: i)
-            var plaintext : String?
-            plaintextBytes.withUnsafeBufferPointer { ptr in
-                plaintext = String(cString: plaintextBytes)
-            }
-            if let plaintext = plaintext {
-                let score = englishPlaintextScore(plaintext: plaintext)
-                if score > maxScore {
-                    maxScore = score
-                    bestKey = i
-                    bestText = plaintext
-                }
-            }
-        }
-        print("\(bestKey)(\(maxScore)): \(bestText))")
+        let (bestKey, bestScore, _) = findXORKey(cyphertext: cyphertext)
+        XCTAssertEqual(bestKey, 88)
+        print("Best score: \(bestScore)")
     }
     
+    func runChallenge4() {
+        let testBundle = Bundle(for: type(of: self))
+        if let cyphertextPath = testBundle.path(forResource: "Challenge4", ofType: "txt", inDirectory: nil) {
+            do {
+                let allCyphertext = try String(contentsOfFile: cyphertextPath)
+                var bestScore = Double.infinity
+                var bestBytes : [UInt8]?
+                var bestKey : UInt8 = 0
+                for cyphertext in allCyphertext.components(separatedBy: "\n") {
+                    let cypherbytes = hexStringToBytes(hexString: cyphertext)
+                    let (curKey, curScore, curBytes) = findXORKey(cyphertext: cypherbytes)
+                    if (curScore < bestScore) {
+                        bestScore = curScore
+                        bestBytes = curBytes
+                        bestKey = curKey
+                    }
+                }
+                if var bestBytes = bestBytes {
+                    bestBytes.append(0)
+                    bestBytes.withUnsafeBufferPointer { ptr in
+                        let bestText = String(cString: ptr.baseAddress!)
+                        print("Answer: \(bestText) (Score: \(bestScore), key: \(bestKey))")
+                    }
+                } else {
+                    XCTFail("Didn't have a best result in bytes")
+                }
+            } catch {
+                XCTFail("Couldn't read from the cyphertext file at \(cyphertextPath)")
+            }
+        } else {
+            XCTFail("Couldn't find the challenge 4 file")
+        }
+    }
+    
+    func testChallenge4() {
+        self.measure {
+            runChallenge4()
+        }
+    }
 }

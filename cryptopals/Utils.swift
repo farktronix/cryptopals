@@ -195,66 +195,128 @@ func xorBytes(bytes1 : [UInt8]? = nil, bytes2 : [UInt8]? = nil, hexString1 : Str
     return retval
 }
 
-func englishPlaintextScore(plaintext : String) -> Double {
+// Lower scores are better
+func englishPlaintextScore(plaintext : [UInt8]) -> Double {
     struct letterFrequency {
-        // https://en.wikipedia.org/wiki/Letter_frequency
-        static let map = [
-            "a" :    0.08167,
-            "b" :    0.01492,
-            "c" :    0.02782,
-            "d" :    0.04253,
-            "e" :    0.12702,
-            "f" :    0.02228,
-            "g" :    0.02015,
-            "h" :    0.06094,
-            "i" :    0.06966,
-            "j" :    0.00153,
-            "k" :    0.00772,
-            "l" :    0.04025,
-            "m" :    0.02406,
-            "n" :    0.06749,
-            "o" :    0.07507,
-            "p" :    0.01929,
-            "q" :    0.00095,
-            "r" :    0.05987,
-            "s" :    0.06327,
-            "t" :    0.09056,
-            "u" :    0.02758,
-            "v" :    0.00978,
-            "w" :    0.02360,
-            "x" :    0.00150,
-            "y" :    0.01974,
-            "z" :    0.0007,
-        ]
-        
-        static let ignored = [".", ",", "-", "\"", " "]
+        // https://web.archive.org/web/20170918020907/http://www.data-compression.com/english.html
+        static let freqArray = [
+            0.0651738, // "a"
+            0.0124248, // "b"
+            0.0217339, // "c"
+            0.0349835, // "d"
+            0.1041442, // "e"
+            0.0197881, // "f"
+            0.0158610, // "g"
+            0.0492888, // "h"
+            0.0558094, // "i"
+            0.0009033, // "j"
+            0.0050529, // "k"
+            0.0331490, // "l"
+            0.0202124, // "m"
+            0.0564513, // "n"
+            0.0596302, // "o"
+            0.0137645, // "p"
+            0.0008606, // "q"
+            0.0497563, // "r"
+            0.0515760, // "s"
+            0.0729357, // "t"
+            0.0225134, // "u"
+            0.0082903, // "v"
+            0.0171272, // "w"
+            0.0013692, // "x"
+            0.0145984, // "y"
+            0.0007836, // "z"
+            0.1918182, // " "
+            ]
     }
+    
+    if (plaintext.count == 0) {
+        return Double.infinity
+    }
+    
     var score : Double = 0
-    var letterFreq : [String : Double] = [:]
-    for curLetter in plaintext.lowercased() {
-        if let curCount = letterFreq[String(curLetter)] {
-            letterFreq[String(curLetter)] = curCount + 1
-        } else {
-            letterFreq[String(curLetter)] = 1
+    var letterCount : [Int : Int] = [:]
+    for i in 0...plaintext.count - 1 {
+        let curLetter = plaintext[i]
+        var index : Int = -1
+        switch curLetter {
+            // c >= 'A' && c <= 'Z'
+            case 0x41...0x5a:
+                index = Int(curLetter - 0x41)
+            // c >= 'a' && c <= 'z'
+            case 0x61...0x7a:
+                index = Int(curLetter - 0x61)
+            case 0x20:
+                index = 26
+            default:
+                score += 1
+        }
+        if (index >= 0) {
+            if letterCount[index] != nil {
+                letterCount[index]! += 1
+            } else {
+                letterCount[index] = 1
+            }
         }
     }
-
-    for (letter, freq) in letterFrequency.map {
-        var diff = freq
-        if let curCount = letterFreq[letter] {
-            let curFreq = curCount / Double(plaintext.count)
-            diff = fabs(curFreq - freq)
-        }
-        score += (1 / diff)
-    }
-
-    // Subtract points for every non-english character
-    for (letter, _) in letterFreq {
-        if letterFrequency.map[letter] == nil &&
-            !letterFrequency.ignored.contains(letter) {
-            score -= 100
+    
+    let totalLetters = plaintext.count
+    for curIndex in 0...26 {
+        if let count = letterCount[curIndex] {
+            let curFreq = Double(count) / Double(totalLetters)
+            let expectedFreq = letterFrequency.freqArray[curIndex]
+            // Calculate Chi^2
+            score += pow((curFreq - expectedFreq), 2) / expectedFreq
         }
     }
     
     return score
+}
+
+func englishPlaintextScore(plaintext : String) -> Double {
+    return englishPlaintextScore(plaintext: Array(plaintext.utf8))
+}
+
+func xorBytesWithKey(bytes: [UInt8], key : UInt8) -> [UInt8] {
+    return bytes.map({ (curChar) -> UInt8 in
+        return curChar ^ key
+    })
+}
+
+func findXORKey(cyphertext : [UInt8]) -> (key: UInt8, score : Double, plaintext : [UInt8]?) {
+    var bestScore = Double.infinity
+    var bestKey : UInt8 = 0
+    var bestText : [UInt8]?
+    for i : UInt8 in 0...255 {
+        let plaintextBytes : [UInt8] = xorBytesWithKey(bytes: cyphertext, key: i)
+        let score = englishPlaintextScore(plaintext: plaintextBytes)
+        
+        // Debug
+//        var mPlaintextBytes = plaintextBytes
+//        mPlaintextBytes.append(0)
+//        mPlaintextBytes.withUnsafeBufferPointer { ptr in
+//            let text = String(cString: ptr.baseAddress!)
+//            print("xor \(i), score \(score): \(text)")
+//        }
+        
+        if score < bestScore {
+            bestScore = score
+            bestKey = i
+            bestText = plaintextBytes
+        }
+    }
+    return (bestKey, bestScore, bestText)
+}
+
+func findXORKey(cyphertext : String) -> (key: UInt8, score : Double, plaintext : String?) {
+    let cypherbytes = hexStringToBytes(hexString: cyphertext)
+    let (bestKey, bestScore, bestTextBytes) = findXORKey(cyphertext: cypherbytes)
+    var bestText : String?
+    if var bestTextBytes = bestTextBytes {
+        bestTextBytes.append(0)
+        bestTextBytes.withUnsafeBufferPointer { ptr in
+            bestText = String(cString: ptr.baseAddress!)
+        }
+    }
+    return (bestKey, bestScore, bestText)
 }
