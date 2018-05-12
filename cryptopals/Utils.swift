@@ -12,6 +12,18 @@ enum CryptoPalsError : Error {
     case invalidArugments
 }
 
+extension String {
+    init(ascii : [UInt8]) {
+        var retval : String?
+        var ascii = ascii
+        ascii.append(0)
+        ascii.withUnsafeBufferPointer { ptr in
+            retval = String(cString: ptr.baseAddress!)
+        }
+        self = retval!
+    }
+}
+
 func hexStringToBytes(hexString : String) -> [UInt8] {
     var retval : [UInt8] = []
     var isMSB = true
@@ -335,3 +347,27 @@ func findXORKey(cyphertext : String, completion : @escaping (_ key: UInt8, _ sco
         completion(bestKey, bestScore, bestText)
     }
 }
+
+func encryptXOR(plaintext: [UInt8], key: [UInt8]) -> [UInt8] {
+    var retval : [UInt8] = plaintext
+    let keyCount = key.count
+    for index in 0...plaintext.count - 1 {
+        retval[index] = (plaintext[index] ^ key[index % keyCount])
+    }
+    return retval
+}
+
+func encryptXOR(plaintext: String, key: String) -> String {
+    let encryptedBytes = encryptXOR(plaintext: Array(plaintext.utf8), key: Array(key.utf8))
+    return bytesToHexString(bytes: encryptedBytes)
+}
+
+func decryptXOR(cryptotext: [UInt8], key: [UInt8]) -> [UInt8] {
+    return encryptXOR(plaintext: cryptotext, key: key)
+}
+
+func decryptXOR(cryptotext: String, key: String) -> String {
+    let decryptedBytes = decryptXOR(cryptotext: hexStringToBytes(hexString: cryptotext), key: Array(key.utf8))
+    return String(ascii: decryptedBytes)
+}
+
