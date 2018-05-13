@@ -167,7 +167,108 @@ class CryptoPalsTests: XCTestCase {
         let line1Hex = encryptXOR(plaintext: plaintext, key: "ICE")
         XCTAssertEqual(line1Hex, expectedCrypto)
         
-        let decryptedText = decryptXOR(cryptotext: line1Hex, key: "ICE")
+        let decryptedText = decryptXOR(cyphertext: line1Hex, key: "ICE")
         XCTAssertEqual(decryptedText, plaintext)
+    }
+    
+    func testHammingDistance() {
+        XCTAssertEqual(hammingDistance(asciiString1: "this is a test", asciiString2: "wokka wokka!!!"), 37)
+    }
+    
+    func guessKeySize(cyphertext : [UInt8]) -> [Int] {
+        let maxSize = min(40, cyphertext.count / 4)
+        
+        var keyDistances : [Int : Double] = [:]
+        for keysize in 2...maxSize {
+            let data1 = Array(cyphertext[0..<keysize])
+            let data2 = Array(cyphertext[keysize..<(2*keysize)])
+            let data3 = Array(cyphertext[(2*keysize)..<(3*keysize)])
+            let data4 = Array(cyphertext[(3*keysize)..<(4*keysize)])
+            
+            var avgDistance = 0.0
+            avgDistance += Double(hammingDistance(data1, data2)) / Double(keysize)
+            avgDistance += Double(hammingDistance(data1, data3)) / Double(keysize)
+            avgDistance += Double(hammingDistance(data1, data4)) / Double(keysize)
+            avgDistance += Double(hammingDistance(data2, data3)) / Double(keysize)
+            avgDistance += Double(hammingDistance(data2, data4)) / Double(keysize)
+            avgDistance += Double(hammingDistance(data3, data4)) / Double(keysize)
+            avgDistance /= 6
+            
+            keyDistances[keysize] = avgDistance
+        }
+        
+        return Array(keyDistances.keys).sorted() {
+            return keyDistances[$0]! < keyDistances[$1]!
+        }
+    }
+    
+    func getBlocksOfKeysize(cyphertext : [UInt8], keysize : Int) -> [[UInt8]] {
+        var cyphertextBlocks : [[UInt8]] = []
+        for index in stride(from: 0, through: cyphertext.count, by: keysize) {
+            if (index == cyphertext.count) {
+                continue
+            }
+            let rangeEnd = min(index + keysize, cyphertext.count)
+            cyphertextBlocks.append(Array(cyphertext[index..<rangeEnd]))
+        }
+        
+        return cyphertextBlocks;
+    }
+    
+    func transposeBlocks(cyphertextBlocks : [[UInt8]], keysize : Int) -> [[UInt8]] {
+        var transposedBlocks : [[UInt8]] = []
+        for _ in 0...keysize - 1 {
+            transposedBlocks.append([])
+        }
+        for block in cyphertextBlocks {
+            for (curIndex, byte) in block.enumerated() {
+                transposedBlocks[curIndex % keysize].append(byte)
+            }
+        }
+        return transposedBlocks
+    }
+    
+    func testChallenge6() {
+        let testBundle = Bundle(for: type(of: self))
+        if let cyphertextPath = testBundle.path(forResource: "Challenge6", ofType: "txt", inDirectory: nil) {
+            do {
+                let fileCyphertextString = try String(contentsOfFile: cyphertextPath).replacingOccurrences(of: "\n", with: "")
+                let decodedData = Data(base64Encoded: fileCyphertextString)
+                XCTAssertNotNil(decodedData)
+                let cyphertext : [UInt8] = [UInt8](decodedData!)
+                
+                // Find the most likely key size
+                let keysizes = guessKeySize(cyphertext: cyphertext)
+                let keysize = keysizes.first!
+                
+                // Break the cyphertext into blocks of keysize
+                let cyphertextBlocks = getBlocksOfKeysize(cyphertext: cyphertext, keysize: keysize)
+                
+                // Transpose the cyphertext blocks
+                let transposedBlocks = transposeBlocks(cyphertextBlocks: cyphertextBlocks, keysize: keysize)
+                
+                // Find the key for each block
+                var bestKeys : [UInt8] = [UInt8](repeating: 0, count: keysize)
+                let group = DispatchGroup()
+                let queue = DispatchQueue(label: "com.farktronix.cryptopals.Challenge6")
+                for blockNumber in 0...keysize - 1 {
+                    group.enter()
+                    findXORKey(cyphertext: transposedBlocks[blockNumber], completion: { (foundKey, _, _) in
+                        queue.async {
+                            bestKeys[blockNumber] = foundKey
+                            group.leave()
+                        }
+                    })
+                }
+                group.wait()
+                
+                // Use the key to decrypt the cyphertext
+                let decryptedBytes = decryptXOR(cyphertext: cyphertext, key: bestKeys)
+                let decryptedString = String(ascii: decryptedBytes)
+                print("String is \"\(decryptedString)\"")
+            } catch {
+                XCTFail("Couldn't read from the cyphertext file at \(cyphertextPath)")
+            }
+        }
     }
 }

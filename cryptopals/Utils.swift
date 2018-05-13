@@ -348,6 +348,8 @@ func findXORKey(cyphertext : String, completion : @escaping (_ key: UInt8, _ sco
     }
 }
 
+// Challenge 5
+
 func encryptXOR(plaintext: [UInt8], key: [UInt8]) -> [UInt8] {
     var retval : [UInt8] = plaintext
     let keyCount = key.count
@@ -362,12 +364,36 @@ func encryptXOR(plaintext: String, key: String) -> String {
     return bytesToHexString(bytes: encryptedBytes)
 }
 
-func decryptXOR(cryptotext: [UInt8], key: [UInt8]) -> [UInt8] {
-    return encryptXOR(plaintext: cryptotext, key: key)
+func decryptXOR(cyphertext: [UInt8], key: [UInt8]) -> [UInt8] {
+    return encryptXOR(plaintext: cyphertext, key: key)
 }
 
-func decryptXOR(cryptotext: String, key: String) -> String {
-    let decryptedBytes = decryptXOR(cryptotext: hexStringToBytes(hexString: cryptotext), key: Array(key.utf8))
+func decryptXOR(cyphertext: String, key: String) -> String {
+    let decryptedBytes = decryptXOR(cyphertext: hexStringToBytes(hexString: cyphertext), key: Array(key.utf8))
     return String(ascii: decryptedBytes)
 }
 
+// Challenge 6
+
+func hammingDistance(_ data1 : [UInt8], _ data2 : [UInt8]) -> Int {
+    if (data1.count != data2.count) {
+        return -1
+    }
+    
+    var result : Int = 0
+    for index in 0...data1.count - 1 {
+        var diff = data1[index] ^ data2[index]
+        while (diff > 0) {
+            if ((diff & 0x01) == 0x01) {
+                result += 1
+            }
+            diff = diff >> 1
+        }
+    }
+    
+    return result
+}
+
+func hammingDistance(asciiString1 : String, asciiString2 : String) -> Int {
+    return hammingDistance(Array(asciiString1.utf8), Array(asciiString2.utf8))
+}

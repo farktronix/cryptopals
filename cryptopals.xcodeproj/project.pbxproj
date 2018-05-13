@@ -11,6 +11,7 @@
 		438DF99E2095AD9700FE92D9 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43B001582095932600912121 /* Utils.swift */; };
 		43B00152209592DA00912121 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43B00151209592DA00912121 /* main.swift */; };
 		43B001592095932600912121 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43B001582095932600912121 /* Utils.swift */; };
+		43DD133020A791210042FCE8 /* Challenge6.txt in Resources */ = {isa = PBXBuildFile; fileRef = 43DD132F20A791210042FCE8 /* Challenge6.txt */; };
 		43DE0F2820A40C5800FE9B68 /* Challenge4.txt in Resources */ = {isa = PBXBuildFile; fileRef = 43DE0F2720A40C5800FE9B68 /* Challenge4.txt */; };
 /* End PBXBuildFile section */
 
@@ -33,6 +34,7 @@
 		43B0014E209592D900912121 /* cryptopals */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = cryptopals; sourceTree = BUILT_PRODUCTS_DIR; };
 		43B00151209592DA00912121 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		43B001582095932600912121 /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
+		43DD132F20A791210042FCE8 /* Challenge6.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Challenge6.txt; sourceTree = "<group>"; };
 		43DE0F2720A40C5800FE9B68 /* Challenge4.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = Challenge4.txt; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -59,6 +61,7 @@
 			children = (
 				438DF9982095ACFF00FE92D9 /* CryptoPalsTests.swift */,
 				43DE0F2720A40C5800FE9B68 /* Challenge4.txt */,
+				43DD132F20A791210042FCE8 /* Challenge6.txt */,
 				438DF99A2095ACFF00FE92D9 /* Info.plist */,
 			);
 			path = CryptoPalsTests;
@@ -172,6 +175,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				43DE0F2820A40C5800FE9B68 /* Challenge4.txt in Resources */,
+				43DD133020A791210042FCE8 /* Challenge6.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
