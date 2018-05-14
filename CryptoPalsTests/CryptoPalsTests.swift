@@ -100,7 +100,9 @@ class CryptoPalsTests: XCTestCase {
             expect.fulfill()
         }
         waitForExpectations(timeout: 10) { (error) in
-            XCTFail()
+            if (error != nil) {
+                XCTFail()
+            }
         }
     }
     
@@ -110,7 +112,6 @@ class CryptoPalsTests: XCTestCase {
             do {
                 let allCyphertext = try String(contentsOfFile: cyphertextPath)
                 var bestScore = Double.infinity
-//                var bestBytes : [UInt8]?
                 var bestKey : UInt8 = 0
                 let decryptGroup = DispatchGroup()
                 let resultQueue = DispatchQueue(label: "com.farktronix.cryptopals.Challenge4ResultQueue")
@@ -123,7 +124,6 @@ class CryptoPalsTests: XCTestCase {
                                 resultQueue.async {
                                     if (curScore < bestScore) {
                                         bestScore = curScore
-//                                      bestBytes = curBytes
                                         bestKey = curKey
                                     }
                                     decryptGroup.leave()
@@ -137,15 +137,6 @@ class CryptoPalsTests: XCTestCase {
                 }
                 decryptGroup.wait()
                 XCTAssertEqual(bestKey, 53)
-//                if var bestBytes = bestBytes {
-//                    bestBytes.append(0)
-//                    bestBytes.withUnsafeBufferPointer { ptr in
-//                        let bestText = String(cString: ptr.baseAddress!)
-//                        print("Answer: \(bestText) (Score: \(bestScore), key: \(bestKey))")
-//                    }
-//                } else {
-//                    XCTFail("Didn't have a best result in bytes")
-//                }
             } catch {
                 XCTFail("Couldn't read from the cyphertext file at \(cyphertextPath)")
             }
@@ -233,9 +224,7 @@ class CryptoPalsTests: XCTestCase {
         if let cyphertextPath = testBundle.path(forResource: "Challenge6", ofType: "txt", inDirectory: nil) {
             do {
                 let fileCyphertextString = try String(contentsOfFile: cyphertextPath).replacingOccurrences(of: "\n", with: "")
-                let decodedData = Data(base64Encoded: fileCyphertextString)
-                XCTAssertNotNil(decodedData)
-                let cyphertext : [UInt8] = [UInt8](decodedData!)
+                let cyphertext : [UInt8] = base64Decode(b64String: fileCyphertextString)
                 
                 // Find the most likely key size
                 let keysizes = guessKeySize(cyphertext: cyphertext)
@@ -270,5 +259,37 @@ class CryptoPalsTests: XCTestCase {
                 XCTFail("Couldn't read from the cyphertext file at \(cyphertextPath)")
             }
         }
+    }
+    
+    func testChallenge7() {
+        let testBundle = Bundle(for: type(of: self))
+        if let cyphertextPath = testBundle.path(forResource: "Challenge6", ofType: "txt", inDirectory: nil) {
+            do {
+                let fileCyphertextString = try String(contentsOfFile: cyphertextPath).replacingOccurrences(of: "\n", with: "")
+                let decodedData = Data(base64Encoded: fileCyphertextString)
+                XCTAssertNotNil(decodedData)
+                let cyphertext : [UInt8] = [UInt8](decodedData!)
+                
+            } catch {
+                XCTFail("Couldn't read from the cyphertext file at \(cyphertextPath)")
+            }
+        }
+    }
+    
+    func testAESDecrypt() {
+        //let cyphertext : [UInt8] = [0x32, 0x43, 0xf6, 0xa8, 0x88, 0x5a, 0x30, 0x8d, 0x31, 0x31, 0x98, 0xa2, 0xe0, 0x37, 0x07, 0x34]
+        let key : [UInt8] = [0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c]
+        //AESDecryptECB128(cyphertext: cyphertext, key: key)
+        
+        let state = loadState(key)
+        printState(state)
+        var nextKey = expandKey(state, round: 1)
+        printState(nextKey)
+        
+//        var row : [UInt8] = extractColumn(state: state, column: 3)
+//        rotateRow(row: &row, amount: 1)
+//        printState(row)
+//        subBytes(&row)
+//        printState(row)
     }
 }
