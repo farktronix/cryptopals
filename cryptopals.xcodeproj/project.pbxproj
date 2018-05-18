@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		430CA1F420AF8B3F00BD60EE /* AESConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 430CA1F320AF8B3F00BD60EE /* AESConstants.swift */; };
+		430CA1F520AF8E3500BD60EE /* AESConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 430CA1F320AF8B3F00BD60EE /* AESConstants.swift */; };
 		438DF9992095ACFF00FE92D9 /* CryptoPalsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 438DF9982095ACFF00FE92D9 /* CryptoPalsTests.swift */; };
 		438DF99E2095AD9700FE92D9 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43B001582095932600912121 /* Utils.swift */; };
 		43B00152209592DA00912121 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43B00151209592DA00912121 /* main.swift */; };
@@ -31,6 +33,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		430CA1F320AF8B3F00BD60EE /* AESConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AESConstants.swift; sourceTree = "<group>"; };
 		438DF9962095ACFF00FE92D9 /* CryptoPalsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CryptoPalsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		438DF9982095ACFF00FE92D9 /* CryptoPalsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CryptoPalsTests.swift; sourceTree = "<group>"; };
 		438DF99A2095ACFF00FE92D9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -97,6 +100,7 @@
 				43B00151209592DA00912121 /* main.swift */,
 				43B001582095932600912121 /* Utils.swift */,
 				43DD133320A7C3B10042FCE8 /* AES.swift */,
+				430CA1F320AF8B3F00BD60EE /* AESConstants.swift */,
 			);
 			path = cryptopals;
 			sourceTree = "<group>";
@@ -197,6 +201,7 @@
 				438DF9992095ACFF00FE92D9 /* CryptoPalsTests.swift in Sources */,
 				43DD133520A8F5F90042FCE8 /* AES.swift in Sources */,
 				438DF99E2095AD9700FE92D9 /* Utils.swift in Sources */,
+				430CA1F520AF8E3500BD60EE /* AESConstants.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -207,6 +212,7 @@
 				43B00152209592DA00912121 /* main.swift in Sources */,
 				43DD133420A7C3B10042FCE8 /* AES.swift in Sources */,
 				43B001592095932600912121 /* Utils.swift in Sources */,
+				430CA1F420AF8B3F00BD60EE /* AESConstants.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
