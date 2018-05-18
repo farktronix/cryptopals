@@ -88,21 +88,35 @@ func mixColumns(state : inout [UInt8]) {
     
 }
 
-func expandKey(_ key : [UInt8], round : Int) -> [UInt8] {
-    var output : [UInt8] = key
-    var temp : [UInt8] = extractColumn(state: key, column: 3)
-    rotateRow(row: &temp, amount: 1)
-    subBytes(&temp)
-    temp[0] = (temp[0] ^ AESConstants.rcon[round])
-    for row in 0...3 {
-        output[(row * 4)] = key[(row * 4)] ^ temp[row]
-    }
-    for column in 1...3 {
+func generateKeys(_ key : [UInt8], rounds : Int) -> [[UInt8]] {
+    var result : [[UInt8]] = []
+    result.append(key)
+    for round in 1...rounds {
+        let lastKey : [UInt8] = result.last!
+        var roundKey : [UInt8] = [UInt8](repeatElement(UInt8(0), count: 16))
+        
+        // Perform key schedule core to the temp value
+        //  (Section 4.3.1): temp = SubByte(RotByte(temp)) ^ Rcon[i / Nk];
+        var temp : [UInt8] = extractColumn(state: lastKey, column: 3)
+        rotateRow(row: &temp, amount: 1)
+        subBytes(&temp)
+        temp[0] = (temp[0] ^ AESConstants.rcon[round])
+        
+        // XOR temp with the first column in the key
         for row in 0...3 {
-            output[(row * 4) + column] = output[(row * 4) + column] ^ output[(row * 4) + (column - 1)]
+            roundKey[(row * 4)] = lastKey[(row * 4)] ^ temp[row]
         }
+        
+        // XOR the rest of the columns with the previous column
+        for column in 1...3 {
+            for row in 0...3 {
+                roundKey[(row * 4) + column] = lastKey[(row * 4) + column] ^ roundKey[(row * 4) + (column - 1)]
+            }
+        }
+        
+        result.append(roundKey)
     }
-    return output
+    return result
 }
 
 func addRoundKey(state : inout [UInt8], roundKey : [UInt8]) {

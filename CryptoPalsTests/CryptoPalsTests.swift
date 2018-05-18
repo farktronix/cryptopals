@@ -282,9 +282,11 @@ class CryptoPalsTests: XCTestCase {
         //AESDecryptECB128(cyphertext: cyphertext, key: key)
         
         let state = loadState(key)
-        printState(state)
-        var nextKey = expandKey(state, round: 1)
-        printState(nextKey)
+        //printState(state)
+        var nextKey : [[UInt8]] = generateKeys(state, rounds: 10)
+        for key in nextKey {
+            printState(key)
+        }
         
 //        var row : [UInt8] = extractColumn(state: state, column: 3)
 //        rotateRow(row: &row, amount: 1)
