@@ -52,47 +52,19 @@ func shiftRowsInv(state : inout [UInt8]) {
 // so this is copied from the C example on the Wikipedia page
 //  https://en.wikipedia.org/wiki/Rijndael_MixColumns
 func gmixColumn(_ column : inout [UInt8]) {
-    var a : [UInt8] = column;
-    var b : [UInt8] = column;
-    /* The array 'a' is simply a copy of the input array 'r'
-     * The array 'b' is each element of the array 'a' multiplied by 2
-     * in Rijndael's Galois field
-     * a[n] ^ b[n] is element n multiplied by 3 in Rijndael's Galois field */
-    for c in 0...3 {
-        /* h is 0xff if the high bit of r[c] is set, 0 otherwise */
-        var h : UInt8 = 0
-        if (column[c] & 0x80) == 0x80 {
-            h = 0xff
-        }
-        b[c] = column[c] << 1; /* implicitly removes high bit because b[c] is an 8-bit char, so we xor by 0x1b and not 0x11b in the next line */
-        b[c] ^= 0x1B & h; /* Rijndael's Galois field */
-    }
-    column[0] = b[0] ^ a[3] ^ a[2] ^ b[1] ^ a[1]; /* 2 * a0 + a3 + a2 + 3 * a1 */
-    column[1] = b[1] ^ a[0] ^ a[3] ^ b[2] ^ a[2]; /* 2 * a1 + a0 + a3 + 3 * a2 */
-    column[2] = b[2] ^ a[1] ^ a[0] ^ b[3] ^ a[3]; /* 2 * a2 + a1 + a0 + 3 * a3 */
-    column[3] = b[3] ^ a[2] ^ a[1] ^ b[0] ^ a[0]; /* 2 * a3 + a2 + a1 + 3 * a0 */
+    var orig : [UInt8] = column;
+    column[0] = AESConstants.GaloisMul2[Int(orig[0])] ^ AESConstants.GaloisMul3[Int(orig[1])] ^ orig[2] ^ orig[3]
+    column[1] = orig[0] ^ AESConstants.GaloisMul2[Int(orig[1])] ^ AESConstants.GaloisMul3[Int(orig[2])] ^ orig[3]
+    column[2] = orig[0] ^ orig[1] ^ AESConstants.GaloisMul2[Int(orig[2])] ^ AESConstants.GaloisMul3[Int(orig[3])]
+    column[3] = AESConstants.GaloisMul3[Int(orig[0])] ^ orig[1] ^ orig[2] ^ AESConstants.GaloisMul2[Int(orig[3])]
 }
 
 func gmixColumnInv(_ column : inout [UInt8]) {
-    var a : [UInt8] = column;
-    var b : [UInt8] = column;
-    /* The array 'a' is simply a copy of the input array 'r'
-     * The array 'b' is each element of the array 'a' multiplied by 2
-     * in Rijndael's Galois field
-     * a[n] ^ b[n] is element n multiplied by 3 in Rijndael's Galois field */
-    for c in 0...3 {
-        /* h is 0xff if the high bit of r[c] is set, 0 otherwise */
-        var h : UInt8 = 0
-        if (column[c] & 0x80) == 0x80 {
-            h = 0xff
-        }
-        b[c] = column[c] << 1; /* implicitly removes high bit because b[c] is an 8-bit char, so we xor by 0x1b and not 0x11b in the next line */
-        b[c] ^= 0x1B & h; /* Rijndael's Galois field */
-    }
-    column[0] = b[0] ^ a[3] ^ a[2] ^ b[1] ^ a[1]; /* 2 * a0 + a3 + a2 + 3 * a1 */
-    column[1] = b[1] ^ a[0] ^ a[3] ^ b[2] ^ a[2]; /* 2 * a1 + a0 + a3 + 3 * a2 */
-    column[2] = b[2] ^ a[1] ^ a[0] ^ b[3] ^ a[3]; /* 2 * a2 + a1 + a0 + 3 * a3 */
-    column[3] = b[3] ^ a[2] ^ a[1] ^ b[0] ^ a[0]; /* 2 * a3 + a2 + a1 + 3 * a0 */
+    var orig : [UInt8] = column;
+    column[0] = AESConstants.GaloisMul14[Int(orig[0])] ^ AESConstants.GaloisMul11[Int(orig[1])] ^ AESConstants.GaloisMul13[Int(orig[2])] ^ AESConstants.GaloisMul9[Int(orig[3])]
+    column[1] = AESConstants.GaloisMul9[Int(orig[0])]  ^ AESConstants.GaloisMul14[Int(orig[1])] ^ AESConstants.GaloisMul11[Int(orig[2])] ^ AESConstants.GaloisMul13[Int(orig[3])]
+    column[2] = AESConstants.GaloisMul13[Int(orig[0])] ^ AESConstants.GaloisMul9[Int(orig[1])]  ^ AESConstants.GaloisMul14[Int(orig[2])] ^ AESConstants.GaloisMul11[Int(orig[3])]
+    column[3] = AESConstants.GaloisMul11[Int(orig[0])] ^ AESConstants.GaloisMul13[Int(orig[1])] ^ AESConstants.GaloisMul9[Int(orig[2])]  ^ AESConstants.GaloisMul14[Int(orig[3])]
 }
 
 func mixColumns(state : inout [UInt8]) {
@@ -158,12 +130,12 @@ func performRound(state : inout [UInt8], roundKey: [UInt8], isFinalRound : Bool 
 }
 
 func performRoundInv(state : inout [UInt8], roundKey: [UInt8], isFinalRound : Bool = false) {
-    subBytesInv(&state)
     shiftRowsInv(state: &state)
+    subBytesInv(&state)
+    addRoundKey(state: &state, roundKey: roundKey)
     if (!isFinalRound) {
         mixColumnsInv(state: &state)
     }
-    addRoundKey(state: &state, roundKey: roundKey)
 }
 
 func extractColumn(state : [UInt8], column : Int) -> [UInt8] {
@@ -197,6 +169,16 @@ func printState(_ state : [UInt8]) {
         curLine.append(String(format: "%02x ", state[index]))
         if (index > 0 && ((index + 1) % 4 == 0)) {
             curLine.append("\n")
+        }
+    }
+    print(curLine)
+}
+
+func printInOrder(_ state : [UInt8]) {
+    var curLine : String = String()
+    for column in 0...3 {
+        for row in 0...3 {
+            curLine.append(String(format: "%02x", state[(row * 4) + column]))
         }
     }
     print(curLine)
@@ -244,13 +226,14 @@ func AESDecryptBlock128(cyphertext : [UInt8], key : [UInt8]) -> [UInt8] {
     var state : [UInt8] = loadState(cyphertext)
     let key = loadState(key)
     let roundKeys = generateKeys(key, rounds: 10)
-    addRoundKey(state: &state, roundKey: key)
+    addRoundKey(state: &state, roundKey: roundKeys[10])
     
-    for round in stride(from: 10, to: 1, by: -1) {
-        let isFinalRound = (round == 1)
+    for round in stride(from: 9, through: 0, by: -1) {
+        let isFinalRound = (round == 0)
         performRoundInv(state: &state, roundKey: roundKeys[round], isFinalRound: isFinalRound)
     }
     
+    state = loadState(state)
     return state
 }
 
@@ -261,7 +244,7 @@ func AESDecryptECB128(cyphertext : [UInt8], key : [UInt8]) -> [UInt8]? {
     }
     
     for index in stride(from: 0, to: cyphertext.count, by: 16) {
-        let cyphertextBlock = Array(plaintext[index...(index + 15)])
+        let cyphertextBlock = Array(cyphertext[index...(index + 15)])
         plaintext += AESDecryptBlock128(cyphertext: cyphertextBlock, key: key)
     }
     
